@@ -16,8 +16,7 @@ pip install -e .
 ```
 
 # Thank yous
-- Many thanks to the <a href="https://github.com/perezjln/gym-lowcostrobot">gym-lowcostrobot</a> project, which this repo has borrowed/inspired from to implement the Mujoco simulation and control of the the Koch arm.
+- Many thanks to the <a href="https://github.com/perezjln/gym-lowcostrobot">gym-lowcostrobot</a> project, which this repo has borrowed/inspired from to implement the Mujoco simulation and control of the the Koch arm. Specifically, the `assets` folder and gym environments are largely adapted from the original repo.
 
-# TODOS:
-- make license and specify in pyproject.toml
-- make thanks to relevant libraries.
+# TODOS
+- Put videos on the github repo readme
