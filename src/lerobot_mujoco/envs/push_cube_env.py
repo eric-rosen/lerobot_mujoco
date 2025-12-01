@@ -83,7 +83,6 @@ class PushCubeEnv(Env):
         distance_threshold=0.05,
         cube_xy_range=0.3,
         target_xy_range=0.3,
-        n_substeps=20,
         render_mode=None,
     ):
         # Load the MuJoCo model and data
@@ -115,8 +114,6 @@ class PushCubeEnv(Env):
         if self.observation_mode in ["state", "both"]:
             observation_subspaces["cube_pos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
         self.observation_space = gym.spaces.Dict(observation_subspaces)
-
-        self.control_decimation = n_substeps  # number of simulation steps per control step
 
         # Set the render utilities
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -244,7 +241,7 @@ class PushCubeEnv(Env):
             ee_action = action[:3]
 
             # Update the robot position based on the action
-            self.ee_pos_target = self.ee_pos_target + ee_action * 0.002  # limit maximum change in position
+            self.ee_pos_target = self.ee_pos_target + ee_action * 0.0005  # limit maximum change in position
             self.ee_pos_target[2] = np.max((0, self.ee_pos_target[2]))
 
             # Update gripper state
@@ -303,10 +300,9 @@ class PushCubeEnv(Env):
         self.data.ctrl = target_qpos
 
         # Step the simulation forward
-        for _ in range(self.control_decimation):
-            mujoco.mj_step(self.model, self.data)
-            if self.render_mode == "human":
-                self.viewer.sync()
+        mujoco.mj_step(self.model, self.data)
+        if self.render_mode == "human":
+            self.viewer.sync()
 
     def get_observation(self):
         # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, gripper]

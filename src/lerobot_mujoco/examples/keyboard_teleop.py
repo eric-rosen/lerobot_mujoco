@@ -3,6 +3,7 @@ import lerobot_mujoco
 import pygame
 import numpy as np
 import sys
+import time
 
 # gripper actions will be sticky, so last_gripper_state is last direction
 sticky_gripper_action = 0
@@ -66,7 +67,7 @@ def get_keyboard_action(env, action_mode):
         return np.array([x, y, z, sticky_gripper_action]), pressed
 
 
-def do_env_sim(task : str, action_mode : str, fps: int = 1.0/1.0):
+def do_env_sim(task : str, action_mode : str):
     pygame.init()
     window = pygame.display.set_mode((200, 200))
     font = pygame.font.SysFont("consolas", 20)
@@ -79,25 +80,32 @@ def do_env_sim(task : str, action_mode : str, fps: int = 1.0/1.0):
     )
     env.reset()
 
+    sim_dt = env.unwrapped.model.opt.timestep 
+
+    last_time = 0
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return
 
-        action, pressed_keys = get_keyboard_action(env, action_mode)
+        cur_time = time.time()
+        if cur_time - last_time >= sim_dt:
+            last_time = cur_time
+            action, pressed_keys = get_keyboard_action(env, action_mode)
 
-        observation, reward, terminated, truncated, info = env.step(action)
+            observation, reward, terminated, truncated, info = env.step(action)
 
-        # Draw pressed keys into pygame window
-        window.fill((30, 30, 30))
-        msg = "Keys: " + (" ".join(pressed_keys) if pressed_keys else "-")
-        text_surface = font.render(msg, True, (255, 255, 255))
-        window.blit(text_surface, (10, 80))
-        pygame.display.flip()
+            # Draw pressed keys into pygame window
+            window.fill((30, 30, 30))
+            msg = "Keys: " + (" ".join(pressed_keys) if pressed_keys else "-")
+            text_surface = font.render(msg, True, (255, 255, 255))
+            window.blit(text_surface, (10, 80))
+            pygame.display.flip()
 
-        if terminated:
-            env.reset()
+            if terminated:
+                env.reset()
 
 
 from enum import Enum

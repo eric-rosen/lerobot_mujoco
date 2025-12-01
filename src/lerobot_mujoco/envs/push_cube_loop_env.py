@@ -5,7 +5,7 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 from gymnasium import Env, spaces
-
+from lerobot_mujoco.path_utils import ASSETS_PATH
 
 class PushCubeLoopEnv(Env):
     """
