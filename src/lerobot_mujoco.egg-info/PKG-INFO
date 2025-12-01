@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: lerobot_mujoco
+Version: 0.1.0
+Summary: LeRobot arms integrated with mujoco
+Author-email: Eric Rosen <eric.andrew.rosen@gmail.com>
+Project-URL: Homepage, https://github.com/your/repo
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
+# TODOS:
+- make license and specify in pyproject.toml
+- make thanks to relevant libraries.
