@@ -1,5 +1,5 @@
 import gymnasium as gym
-import lerobot_mujoco  # noqa
+import lerobot_mujoco 
 import pygame
 import numpy as np
 import sys
@@ -66,7 +66,7 @@ def get_keyboard_action(env, action_mode):
         return np.array([x, y, z, sticky_gripper_action]), pressed
 
 
-def do_env_sim(task : str, action_mode : str):
+def do_env_sim(task : str, action_mode : str, fps: int = 1.0/1.0):
     pygame.init()
     window = pygame.display.set_mode((200, 200))
     font = pygame.font.SysFont("consolas", 20)
@@ -79,13 +79,12 @@ def do_env_sim(task : str, action_mode : str):
     )
     env.reset()
 
-    for _ in range(1_000_000):
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return
 
-        # Single function handles WASDQE + R
         action, pressed_keys = get_keyboard_action(env, action_mode)
 
         observation, reward, terminated, truncated, info = env.step(action)
@@ -96,8 +95,6 @@ def do_env_sim(task : str, action_mode : str):
         text_surface = font.render(msg, True, (255, 255, 255))
         window.blit(text_surface, (10, 80))
         pygame.display.flip()
-
-        env.render()
 
         if terminated:
             env.reset()

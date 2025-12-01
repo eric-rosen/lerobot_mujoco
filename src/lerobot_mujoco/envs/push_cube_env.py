@@ -244,7 +244,7 @@ class PushCubeEnv(Env):
             ee_action = action[:3]
 
             # Update the robot position based on the action
-            self.ee_pos_target = self.ee_pos_target + ee_action * 0.02  # limit maximum change in position
+            self.ee_pos_target = self.ee_pos_target + ee_action * 0.002  # limit maximum change in position
             self.ee_pos_target[2] = np.max((0, self.ee_pos_target[2]))
 
             # Update gripper state
