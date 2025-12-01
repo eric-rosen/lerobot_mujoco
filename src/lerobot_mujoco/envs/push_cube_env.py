@@ -162,7 +162,7 @@ class PushCubeEnv(Env):
         step=0.5,
         lm_damping=0.15,
         max_iter=10,
-        tolerance_err=0.01,
+        tolerance_err=0.0001,
         home_position=None,
         nullspace_weight=0.0,
     ):
