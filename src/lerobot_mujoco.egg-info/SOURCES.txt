@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-src/lerobot_mujoco/__init__.py
-src/lerobot_mujoco/hello_world.py
-src/lerobot_mujoco.egg-info/PKG-INFO
-src/lerobot_mujoco.egg-info/SOURCES.txt
-src/lerobot_mujoco.egg-info/dependency_links.txt
-src/lerobot_mujoco.egg-info/top_level.txt
