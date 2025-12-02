@@ -11,21 +11,52 @@ sticky_gripper_action = 0
 # Single function to read keys AND decide action/reset
 def get_keyboard_action(env, action_mode):
     global sticky_gripper_action
+    pressed = []
+
+
+    # For keys that are held down
     keys = pygame.key.get_pressed()
 
     shift_pressed = keys[pygame.K_RSHIFT] or keys[pygame.K_LSHIFT]
 
+
+    # For keys that pressed once (toggle)
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_c:
+                # toggle transparency
+                for idx in [5,6]:
+                    env.unwrapped.model.geom(f'sync_link_{idx}').rgba[-1] = 1 - env.unwrapped.model.geom('sync_link_6').rgba[-1]
+
+
+            # f to toggle sticky gripper direction
+            if event.key == pygame.K_f:
+                pressed.append("f")
+                if sticky_gripper_action == 0:
+                    sticky_gripper_action = -0.1
+                else:
+                    sticky_gripper_action *= -1
+            
+            # Reset the environment if R is pressed
+            if event.key == pygame.K_r:
+                pressed.append("R")
+                if shift_pressed:
+                    env.unwrapped.reset_ee_pos_target()
+                else:
+                    env.reset()
+                return [0, 0, 0, 0], pressed
+            
+
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exist()
+
     if keys[pygame.K_z]:
         sys.exit()
-    if keys[pygame.K_c]:
-        # example: fade out to 30% opacity
-        for idx in [5,6]:
-            env.unwrapped.model.geom(f'sync_link_{idx}').rgba[-1] = 1 - env.unwrapped.model.geom('sync_link_6').rgba[-1]
         
     if action_mode == "ee":
         # x,y,z position + (g)ripper state
         x = y = z = 0
-        pressed = []
 
         # WASD movement
         if keys[pygame.K_w]:
@@ -42,27 +73,6 @@ def get_keyboard_action(env, action_mode):
             z = 1; pressed.append("Q")
         elif keys[pygame.K_e]:
             z = -1; pressed.append("E")
-
-        # f to toggle sticky gripper direction
-        if keys[pygame.K_f]:
-            pressed.append("f")
-            if shift_pressed:
-                # reset to 0
-                sticky_gripper_action = 0 
-            elif sticky_gripper_action == 0:
-                sticky_gripper_action = -0.1
-            else:
-                sticky_gripper_action *= -1
-        
-        # Reset the environment if R is pressed
-        if keys[pygame.K_r]:
-            pressed.append("R")
-            if shift_pressed:
-                env.unwrapped.reset_ee_pos_target()
-            else:
-                env.reset()
-            return [0, 0, 0, 0], pressed
-        
 
         return np.array([x, y, z, sticky_gripper_action]), pressed
 
@@ -85,11 +95,6 @@ def do_env_sim(task : str, action_mode : str):
     last_time = 0
 
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
-
         cur_time = time.time()
         if cur_time - last_time >= sim_dt:
             last_time = cur_time
