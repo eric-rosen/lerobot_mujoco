@@ -24,6 +24,7 @@ def get_keyboard_action(env, action_mode):
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_c:
+                pressed.append("C")
                 # toggle transparency
                 for idx in [5,6]:
                     env.unwrapped.model.geom(f'sync_link_{idx}').rgba[-1] = 1 - env.unwrapped.model.geom('sync_link_6').rgba[-1]
@@ -31,7 +32,7 @@ def get_keyboard_action(env, action_mode):
 
             # f to toggle sticky gripper direction
             if event.key == pygame.K_f:
-                pressed.append("f")
+                pressed.append("F")
                 if sticky_gripper_action == 0:
                     sticky_gripper_action = -0.1
                 else:
@@ -122,4 +123,10 @@ class ActionMode(Enum):
 if __name__ == "__main__":
     task = "PushCube-v0"
     action_mode = ActionMode.EE
+    print("\n============ Keyboard Controls ============\n" \
+    "w/a/s/d/e/q: 3D global position control for end effector. Hold these to move fast, or tap them for precision.\n" \
+    "f: toggle gripper open/close.\n" \
+    "c: toggle visualizing red gripper representing goal pose.\n"\
+    "r: reset env.\n" \
+    "z: quit.\n")
     do_env_sim(task, action_mode.value)

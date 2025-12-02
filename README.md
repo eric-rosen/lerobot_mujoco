@@ -30,7 +30,7 @@ Run the following example for keyboard teleop:
 python src/lerobot_mujoco/examples/keyboard_teleop.py 
 ```
 
-You'll see the robot render in a mujoco render + a small pygame window. If you click on the pygame window, you can push/hold the following buttons to control a (red) ghost gripper that represents the goal pose for the robot's end effector:
+You'll see two windows pop up: 1) the robot render in a mujoco render, and 2) a small pygame window. If you click on the pygame window, you can push/hold the following buttons to control a (red) ghost gripper that represents the goal pose for the robot's end effector:
 - w/a/s/d/e/q: 3D global position control for end effector. Hold these to move fast, or tap them for precision.
 - g: toggle gripper open/close.
 - c: toggle visualizing red gripper representing goal pose.
@@ -46,7 +46,4 @@ You'll see the robot render in a mujoco render + a small pygame window. If you c
 - make ASSETS_PATH use the import instead of dir path
 - adjust camera so its convient for controlling directly
 - add linting
-- make it so that for keyboard inputs, you only read gripper/c/toggle buttons on press rather than if they're held down.
-- make it so commands for keyboard teleop get printed to terminal
-- tutorial on how to run things
 - make it so that the speed of the command pose is adjustable.
