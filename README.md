@@ -41,9 +41,6 @@ You'll see two windows pop up: 1) the robot render in a mujoco render, and 2) a 
 
 # TODOS
 - Put videos on the github repo readme
-- add tests
+- add information about available tasks.
 - spell check
-- make ASSETS_PATH use the import instead of dir path
-- adjust camera so its convient for controlling directly
 - add linting
-- make it so that the speed of the command pose is adjustable.
