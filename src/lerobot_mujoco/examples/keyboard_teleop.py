@@ -121,7 +121,7 @@ class ActionMode(Enum):
     JOINT = "joint"
 
 if __name__ == "__main__":
-    task = "PushCube-v0"
+    task = "LiftCube-v0"
     action_mode = ActionMode.EE
     print("\n============ Keyboard Controls ============\n" \
     "w/a/s/d/e/q: 3D global position control for end effector. Hold these to move fast, or tap them for precision.\n" \

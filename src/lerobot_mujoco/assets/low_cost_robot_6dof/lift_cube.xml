@@ -25,7 +25,26 @@
     <body name="cube" pos="0.0 0.2 0.01">
       <freejoint name="red_box_joint" />
       <inertial pos="0 0 0" mass="0.1" diaginertia="0.00016667 0.00016667 0.00016667" />
-      <geom friction="0.5" condim="4" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="red_box" rgba="0.5 0 0 1" priority="1" />
+      <geom friction="0.5" condim="4" pos="0 0 0" size="0.01 0.01 0.01" type="box" name="red_box" rgba="0.5 0 0 1" priority="1" />
+    </body>
+
+    <body name="ee_goal" pos="0 0 0" gravcomp="1.0">
+        <!-- free-floating target pose (3 pos + 4 quat in qpos) -->
+        <joint name="ee_goal_free" type="free"/>
+
+        <!-- ghost_link5 positioned exactly where sync_link_5 used to be, relative to ee_goal -->
+        <body name="ghost_link5" pos="0.06429 -0.00327 -0.0011" gravcomp="1.0">
+            <geom name="sync_link_5" type="mesh" mesh="link_5"
+                  rgba="1 0 0 1" contype="0" conaffinity="0"/>
+            <!-- place the ghost hinge as a child body, with pos = pos_link6_abs - pos_link5_abs -->
+            <body name="ghost_link6" pos="-0.01315 -0.0075 0.0145" gravcomp="1.0">
+                <joint name="ghost_joint_6" type="hinge" axis="0 0 -1"
+                      range="-2.45 0.032"/>
+                <geom name="sync_link_6" type="mesh" mesh="link_6"
+                      pos="0 0 0"
+                      rgba="1 0 0 1" contype="0" conaffinity="0"/>
+            </body>
+        </body>
     </body>
 
     <camera name="camera_front" pos="0.049 0.5 0.225" xyaxes="-0.998 0.056 -0.000 -0.019 -0.335 0.942" />

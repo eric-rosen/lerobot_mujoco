@@ -82,8 +82,8 @@ class LiftCubeEnv(Env):
         distance_threshold=0.05,
         height_threshold=0.1,
         cube_xy_range=0.3,
-        n_substeps=20,
         render_mode=None,
+        terminate_height=0.2 # height of block resulting in termination
     ):
         # Load the MuJoCo model and data
         self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "lift_cube.xml"))
@@ -115,15 +115,13 @@ class LiftCubeEnv(Env):
             observation_subspaces["cube_pos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
         self.observation_space = gym.spaces.Dict(observation_subspaces)
 
-        self.control_decimation = n_substeps  # number of simulation steps per control step
-
         # Set the render utilities
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
         if self.render_mode == "human":
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data, show_left_ui=False, show_right_ui=False)
             self.viewer.cam.azimuth = -45.0
-            self.viewer.cam.distance = 1.5
+            self.viewer.cam.distance = 1
             self.viewer.cam.elevation = -20.0
             self.viewer.cam.lookat = np.array([0.0, 0.0, 0.0])
         elif self.render_mode == "rgb_array":
@@ -141,6 +139,16 @@ class LiftCubeEnv(Env):
 
         # control range
         self.ctrl_range = self.model.actuator_ctrlrange
+
+        self.terminate_height = terminate_height
+
+        self.reset_ee_pos_target()
+
+    def reset_ee_pos_target(self):
+        # ee pos target
+        ee_id = self.model.site("end_effector_site").id
+        self.ee_pos_target = self.data.site(ee_id).xpos.copy()
+        self.gripper_state = 0
 
     def inverse_kinematics(
         self,
@@ -228,22 +236,40 @@ class LiftCubeEnv(Env):
         action = np.clip(action, self.action_space.low, self.action_space.high)
 
         if self.action_mode == "ee":
-            ee_action, gripper_action = action[:3], action[3]
+            ee_action = action[:3]
 
             # Update the robot position based on the action
-            ee_id = self.model.site("end_effector_site").id
-            ee_target_pos = self.data.site(ee_id).xpos + ee_action * 0.05  # limit maximum change in position
-            ee_target_pos[2] = np.max((0, ee_target_pos[2]))
+            self.ee_pos_target = self.ee_pos_target + ee_action * 0.0005  # limit maximum change in position
+            self.ee_pos_target[2] = np.max((0, self.ee_pos_target[2]))
+
+            # Update gripper state
+            self.gripper_state += action[-1]
+            # clip it between link6's joint pos range
+            # -2.45,0.032 are bounds, but may clip lower for more sane grasping stuff
+            self.gripper_state = np.clip(self.gripper_state, -1, 0.032)
+
+            ### Visualize indicator for where we're trying to go
+            ee_goal_id = self.model.body("ee_goal").id
+            joint_id = self.model.body_jntadr[ee_goal_id] # Address of the first joint belonging to the body
+            qpos_adr = self.model.jnt_qposadr[joint_id] # Address of the joint's data in qpos
+
+            # Set the desired position (x, y, z) and orientation (quaternion)
+            # posistion is wherever ee_pos_target (which is where end_effector_site goes) is minus the site_id offset (Since that's how far off link_5 viz is)
+            self.data.qpos[qpos_adr:qpos_adr+3] = self.ee_pos_target
+            # for now, just make it whatever the ee actually is
+            # TODO: make it so that quat is associated with ee_pos_target
+            link_5_id = self.model.body(name="link_5").id
+            self.data.qpos[qpos_adr+3:qpos_adr+7] = self.data.xquat[link_5_id]
+            # update gripper viz
+            ghost_joint6_id = self.model.joint("ghost_joint_6").id
+            ghost_qpos_adr = self.model.jnt_qposadr[ghost_joint6_id]
+            self.data.qpos[ghost_qpos_adr] = float(self.gripper_state)
+            ###
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-            target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos)
-
-            # Update the robot gripper position based on the action
-            target_gripper_pos = gripper_action * 0.2
-            current_gripper_joint_angle = self.data.qpos[self.num_dof - 1].copy()
-            target_qpos[-1:] = np.clip(
-                current_gripper_joint_angle + target_gripper_pos, self.ctrl_range[-1, 0], self.ctrl_range[-1, 1]
-            )
+            target_qpos = self.inverse_kinematics(ee_target_pos=self.ee_pos_target)
+            # Use gripper value for action
+            target_qpos[-1:] = np.array(self.gripper_state)
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
@@ -271,10 +297,9 @@ class LiftCubeEnv(Env):
         self.data.ctrl = target_qpos
 
         # Step the simulation forward
-        for _ in range(self.control_decimation):
-            mujoco.mj_step(self.model, self.data)
-            if self.render_mode == "human":
-                self.viewer.sync()
+        mujoco.mj_step(self.model, self.data)
+        if self.render_mode == "human":
+            self.viewer.sync()
 
     def get_observation(self):
         # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, gripper]
@@ -306,6 +331,9 @@ class LiftCubeEnv(Env):
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
+        # reset viz
+        self.reset_ee_pos_target()
+
         return self.get_observation(), {}
 
     def step(self, action):
@@ -324,8 +352,7 @@ class LiftCubeEnv(Env):
 
         # info = {"is_success": self.is_success(ee_pos, observation["cube_pos"])}
         info = {}
-
-        terminated = False
+        terminated = cube_z > self.terminate_height
         truncated = False
 
         # Compute the reward (dense reward)
