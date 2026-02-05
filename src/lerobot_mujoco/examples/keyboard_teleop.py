@@ -1,5 +1,6 @@
+import argparse
 import gymnasium as gym
-import lerobot_mujoco 
+import lerobot_mujoco
 import pygame
 import numpy as np
 import sys
@@ -121,7 +122,16 @@ class ActionMode(Enum):
     JOINT = "joint"
 
 if __name__ == "__main__":
-    task = "LiftCube-v0"
+    parser = argparse.ArgumentParser(description="Keyboard teleoperation for robot control")
+    parser.add_argument("--task", choices=["pushcube", "liftcube"], default="liftcube",
+                        help="Task to run (default: liftcube)")
+    args = parser.parse_args()
+
+    task_map = {
+        "pushcube": "PushCube-v0",
+        "liftcube": "LiftCube-v0",
+    }
+    task = task_map[args.task]
     action_mode = ActionMode.EE
     print("\n============ Keyboard Controls ============\n" \
     "w/a/s/d/e/q: 3D global position control for end effector. Hold these to move fast, or tap them for precision.\n" \
