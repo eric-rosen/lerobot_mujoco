@@ -121,7 +121,7 @@ class PushCubeEnv(Env):
         if self.render_mode == "human":
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data, show_left_ui=False, show_right_ui=False)
             self.viewer.cam.azimuth = -45.0
-            self.viewer.cam.distance = 1.5
+            self.viewer.cam.distance = 1
             self.viewer.cam.elevation = -20.0
             self.viewer.cam.lookat = np.array([0.0, 0.0, 0.0])
         elif self.render_mode == "rgb_array":
