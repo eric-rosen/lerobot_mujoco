@@ -372,12 +372,22 @@ class PushCubeEnv(Env):
         d = self.goal_distance(achieved_goal, desired_goal)
         return d < self.distance_threshold
 
-    def compute_reward(self, achieved_goal, desired_goal, info=None):
-        d = self.goal_distance(achieved_goal, desired_goal)
+    def compute_reward(self, cube_pos, target_pos, info=None):
+        # Compute distance between cube_pos and target_pos (goal position)
+        obj_dist = self.goal_distance(cube_pos, target_pos)
+        # Compute distance between cube_pos and current ee_pos
+        cur_ee_pos = self.data.site(self.model.site("end_effector_site").id).xpos
+        gripper_dist = self.goal_distance(cur_ee_pos, cube_pos)
+
+        # todo: weight these objectives
+        d = obj_dist + gripper_dist
+
         if self.reward_type == "sparse":
             return -(d > self.distance_threshold).astype(np.float32)
-        else:
+        elif self.reward_type == "dense":
             return -d
+        else:
+            raise ValueError(f"reward_type should be sparse or dense, but is {self.reward_type}")
 
     def render(self):
         if self.render_mode == "human":

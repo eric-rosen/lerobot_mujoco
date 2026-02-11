@@ -88,7 +88,8 @@ def do_env_sim(task : str, action_mode : str):
         task,
         observation_mode="state",
         render_mode="human",
-        action_mode=action_mode
+        action_mode=action_mode,
+        reward_type="dense"
     )
     env.reset()
 
@@ -123,7 +124,7 @@ class ActionMode(Enum):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Keyboard teleoperation for robot control")
-    parser.add_argument("--task", choices=["pushcube", "liftcube"], default="liftcube",
+    parser.add_argument("--task", choices=["pushcube", "liftcube"], default="pushcube",
                         help="Task to run (default: liftcube)")
     args = parser.parse_args()
 
