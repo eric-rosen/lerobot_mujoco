@@ -84,6 +84,8 @@ class PushCubeEnv(Env):
         cube_xy_range=0.3,
         target_xy_range=0.3,
         render_mode=None,
+        fix_target_pos=np.array([0,0.1,0],dtype=np.float32), # None for random target
+        fix_init_cube_pos=np.array([0,0.2,0],dtype=np.float32), # None for random target
     ):
         # Load the MuJoCo model and data
         self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "push_cube.xml"))
@@ -144,7 +146,14 @@ class PushCubeEnv(Env):
 
         self.reset_ee_pos_target()
 
-    
+        self.fix_target_pos = fix_target_pos
+        if self.fix_target_pos is None:
+            self.fix_target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
+
+        self.fix_init_cube_pos = fix_init_cube_pos
+        if self.fix_init_cube_pos is None:
+            self.fix_init_cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
+
     def reset_ee_pos_target(self):
         # ee pos target
         ee_id = self.model.site("end_effector_site").id
@@ -326,15 +335,14 @@ class PushCubeEnv(Env):
         super().reset(seed=seed, options=options)
 
         # Reset the robot to the initial position and sample the cube position
-        cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
+        cube_pos = self.fix_init_cube_pos
         cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.data.qpos[: self.num_dof] = robot_qpos
         self.data.qpos[self.num_dof : self.num_dof + 7] = np.concatenate([cube_pos, cube_rot])
 
         # Sample the target position
-        self.target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
-
+        self.target_pos = self.fix_target_pos
         # Update visualization
         self.model.geom("target_region").pos = self.target_pos[:]
 
