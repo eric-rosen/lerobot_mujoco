@@ -85,7 +85,8 @@ class PushCubeEnv(Env):
         target_xy_range=0.3,
         render_mode=None,
         fix_target_pos=np.array([0,0.1,0],dtype=np.float32), # None for random target
-        fix_init_cube_pos=np.array([0,0.2,0],dtype=np.float32), # None for random target
+        fix_init_cube_pos=np.array([0,0.2,0.01],dtype=np.float32), # None for random target
+        scale_ee_action=0.005 # this is good for RL, probably want 0.0005 for keyboard ctrl.
     ):
         # Load the MuJoCo model and data
         self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "push_cube.xml"))
@@ -115,6 +116,8 @@ class PushCubeEnv(Env):
             self.renderer = mujoco.Renderer(self.model)
         if self.observation_mode in ["state", "both"]:
             observation_subspaces["cube_pos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
+        if self.action_mode == "ee":
+            observation_subspaces["ee_pos_target"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
         self.observation_space = gym.spaces.Dict(observation_subspaces)
 
         # Set the render utilities
@@ -153,6 +156,8 @@ class PushCubeEnv(Env):
         self.fix_init_cube_pos = fix_init_cube_pos
         if self.fix_init_cube_pos is None:
             self.fix_init_cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
+
+        self.scale_ee_action = scale_ee_action
 
     def reset_ee_pos_target(self):
         # ee pos target
@@ -250,7 +255,7 @@ class PushCubeEnv(Env):
             ee_action = action[:3]
 
             # Update the robot position based on the action
-            self.ee_pos_target = self.ee_pos_target + ee_action * 0.0005  # limit maximum change in position
+            self.ee_pos_target = self.ee_pos_target + ee_action * self.scale_ee_action # limit maximum change in position
             self.ee_pos_target[2] = np.max((0, self.ee_pos_target[2]))
 
             # Update gripper state
@@ -328,6 +333,8 @@ class PushCubeEnv(Env):
             observation["image_top"] = self.renderer.render()
         if self.observation_mode in ["state", "both"]:
             observation["cube_pos"] = self.data.qpos[self.num_dof : self.num_dof + 3].astype(np.float32).copy()
+        if self.action_mode == "ee":
+            observation["ee_pos_target"] = self.ee_pos_target.astype(np.float32).copy()
         return observation
 
     def reset(self, seed=None, options=None):

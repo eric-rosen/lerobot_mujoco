@@ -89,7 +89,8 @@ def do_env_sim(task : str, action_mode : str):
         observation_mode="state",
         render_mode="human",
         action_mode=action_mode,
-        reward_type="dense"
+        reward_type="dense",
+        scale_ee_action=0.0005
     )
     env.reset()
 
